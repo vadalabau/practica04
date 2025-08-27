@@ -1,8 +1,3 @@
-"""
-Manejadores de solicitudes para el Sistema de Gestión de Satélites
-Procesa comandos del cliente usando serialización JSON
-"""
-
 import json
 from typing import Dict, Any, List
 from models import Satelite, Mision, DatosRecolectados, Sensor, serialize_to_json, deserialize_from_json

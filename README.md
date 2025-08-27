@@ -101,3 +101,4 @@ El sistema utiliza JSON para serializar las siguientes estructuras:
   "fecha": "YYYY-MM-DD HH:MM:SS"
 }
 ```
+

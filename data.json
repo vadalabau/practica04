@@ -1,0 +1,31 @@
+{
+    "satelites": [
+        {
+            "nombre": "LIFE",
+            "tipo": "INVESTIGACION",
+            "sensores": [
+                "pedro",
+                "marcos"
+            ],
+            "fecha_lanzamiento": "2020-10-10",
+            "orbita": "LAS",
+            "estado": "activo"
+        }
+    ],
+    "misiones": [
+        {
+            "satellite": "pedro",
+            "objetivo": "todo",
+            "zona": "las",
+            "duracion": "32",
+            "estado": "terminada"
+        }
+    ],
+    "datos": [
+        {
+            "satellite": "LIFE",
+            "tipo_dato": "mision",
+            "contenido": "todo"
+        }
+    ]
+}
