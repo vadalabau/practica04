@@ -1,84 +1,105 @@
-# server.py
 import socket
 import threading
-from database import SatelliteDatabase
+import json
 
-db = SatelliteDatabase()
+# Archivos JSON para persistencia
+SATELITES_FILE = "satelites.json"
+MISIONES_FILE = "misiones.json"
+DATOS_FILE = "datos.json"
 
-HOST = 'localhost'
-PORT = 12345
-
-def handle_client(conn, addr):
-    print(f"Cliente conectado desde {addr}")
-    while True:
-        try:
-            msg = conn.recv(4096).decode()
-            if not msg:
-                break
-
-            if msg == "quit":
-                break
-
-            response = process_command(msg)
-            conn.sendall(response.encode())
-
-        except Exception as e:
-            print(f"Error: {e}")
-            break
-
-    conn.close()
-    print(f"Cliente desconectado {addr}")
-
-def process_command(msg):
+# Cargar datos
+def cargar_datos(ruta):
     try:
-        cmd, *args = msg.split("|")
-        cmd = cmd.upper()
+        with open(ruta, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
 
-        if cmd == "REGISTER_SATELLITE":
-            sat_data = eval(args[0])
-            db.add_satellite(sat_data)
-            return "✅ Satélite registrado correctamente."
+def guardar_datos(ruta, data):
+    with open(ruta, "w") as f:
+        json.dump(data, f, indent=4)
 
-        elif cmd == "REGISTER_MISSION":
-            mission_data = eval(args[0])
-            db.add_mission(mission_data)
-            return "✅ Misión registrada correctamente."
+# Funciones para manejar operaciones
+def registrar_satelite(info):
+    satelites = cargar_datos(SATELITES_FILE)
+    nuevo_id = max([s["id"] for s in satelites], default=0) + 1
+    info["id"] = nuevo_id
+    info["sensores"] = [s.strip() for s in info.get("sensores", "").split(",")]
+    satelites.append(info)
+    guardar_datos(SATELITES_FILE, satelites)
+    return {"status": "success", "message": "Satélite registrado"}
 
-        elif cmd == "QUERY_SATELLITES":
-            filtro = eval(args[0]) if args else None
-            sats = db.get_satellites(filtro)
-            return str(sats)
+def consultar_satelites():
+    satelites = cargar_datos(SATELITES_FILE)
+    return {"status": "success", "data": satelites}
 
-        elif cmd == "QUERY_MISSIONS":
-            filtro = eval(args[0]) if args else None
-            missions = db.get_missions(filtro)
-            return str(missions)
+def registrar_mision(info):
+    misiones = cargar_datos(MISIONES_FILE)
+    nuevo_id = max([m["id"] for m in misiones], default=0) + 1
+    info["id"] = nuevo_id
+    misiones.append(info)
+    guardar_datos(MISIONES_FILE, misiones)
+    return {"status": "success", "message": "Misión registrada"}
 
-        elif cmd == "REGISTER_DATA":
-            data = eval(args[0])
-            db.add_data(data)
-            return "✅ Datos registrados correctamente."
+def consultar_misiones():
+    misiones = cargar_datos(MISIONES_FILE)
+    return {"status": "success", "data": misiones}
 
-        elif cmd == "QUERY_DATA":
-            filtro = eval(args[0]) if args else None
-            data = db.get_data(filtro)
-            return str(data)
+def registrar_dato(info):
+    datos = cargar_datos(DATOS_FILE)
+    nuevo_id = max([d["id"] for d in datos], default=0) + 1
+    info["id"] = nuevo_id
+    datos.append(info)
+    guardar_datos(DATOS_FILE, datos)
+    return {"status": "success", "message": "Dato registrado"}
 
-        else:
-            return "❌ Comando no reconocido."
+def consultar_datos():
+    datos = cargar_datos(DATOS_FILE)
+    return {"status": "success", "data": datos}
 
+# Manejo de clientes
+def manejar_cliente(conn, addr):
+    print(f"Cliente conectado: {addr}")
+    try:
+        while True:
+            data = conn.recv(4096).decode()
+            if not data:
+                break
+            try:
+                request = json.loads(data)
+                accion = request.get("accion")
+                info = request.get("info", {})
+                if accion == "registrar_satelite":
+                    respuesta = registrar_satelite(info)
+                elif accion == "consultar_satelites":
+                    respuesta = consultar_satelites()
+                elif accion == "registrar_mision":
+                    respuesta = registrar_mision(info)
+                elif accion == "consultar_misiones":
+                    respuesta = consultar_misiones()
+                elif accion == "registrar_dato":
+                    respuesta = registrar_dato(info)
+                elif accion == "consultar_datos":
+                    respuesta = consultar_datos()
+                else:
+                    respuesta = {"status": "error", "message": "Acción desconocida"}
+            except Exception as e:
+                respuesta = {"status": "error", "message": str(e)}
+            conn.send(json.dumps(respuesta).encode())
     except Exception as e:
-        return f"❌ Error procesando comando: {e}"
+        print(f"Error con el cliente {addr}: {e}")
+    finally:
+        conn.close()
+        print(f"Cliente desconectado: {addr}")
 
-def main():
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((HOST, PORT))
-    server.listen(5)
-    print(f"Servidor escuchando en {HOST}:{PORT}")
+# Configuración del servidor
+HOST = "localhost"
+PORT = 12345
+servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+servidor.bind((HOST, PORT))
+servidor.listen()
+print(f"Servidor escuchando en {HOST}:{PORT}")
 
-    while True:
-        conn, addr = server.accept()
-        threading.Thread(target=handle_client, args=(conn, addr)).start()
-
-if __name__ == "__main__":
-    main()
+while True:
+    conn, addr = servidor.accept()
+    threading.Thread(target=manejar_cliente, args=(conn, addr), daemon=True).start()

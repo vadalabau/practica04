@@ -1,0 +1,24 @@
+[
+    {
+        "id": 1,
+        "nombre": "JOTAQ",
+        "tipo": "terrestre",
+        "sensores": [
+            "master"
+        ],
+        "fecha_lanzamiento": "2021-12-12",
+        "orbita": "LEO",
+        "estado": "activo"
+    },
+    {
+        "nombre": "asd",
+        "tipo": "TERRESTRE",
+        "sensores": [
+            "marrie"
+        ],
+        "fecha_lanzamiento": "2021-12-12",
+        "orbita": "leo",
+        "estado": "activo",
+        "id": 2
+    }
+]

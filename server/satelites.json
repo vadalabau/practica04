@@ -1,0 +1,13 @@
+[
+    {
+        "nombre": "LIFE",
+        "tipo": "terrestre",
+        "sensores": [
+            "muchisimos"
+        ],
+        "fecha_lanzamiento": "2021-12-12",
+        "orbita": "LEO",
+        "estado": "activo",
+        "id": 1
+    }
+]

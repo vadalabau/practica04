@@ -1,0 +1,16 @@
+{
+    "satelites": [
+        {
+            "nombre": "MAGALI",
+            "tipo": "espacial,",
+            "sensores": [
+                ""
+            ],
+            "fecha_lanzamiento": "2023-12-09",
+            "orbita": "ANDROMEDA",
+            "estado": "mantenimiento"
+        }
+    ],
+    "misiones": [],
+    "datos": []
+}
