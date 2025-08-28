@@ -1,0 +1,98 @@
+{
+    "satelites": [
+        [
+            1,
+            "Sat\u00e9lite-1-1756384547704889500",
+            "Observaci\u00f3n",
+            "[{\"nombre\": \"C\\u00e1mara\", \"tipo\": \"\\u00d3ptico\"}]",
+            "2024-01-15",
+            "LEO",
+            "activo"
+        ],
+        [
+            2,
+            "Sat\u00e9lite-2-1756384547806705900",
+            "Observaci\u00f3n",
+            "[{\"nombre\": \"C\\u00e1mara\", \"tipo\": \"\\u00d3ptico\"}]",
+            "2024-01-15",
+            "LEO",
+            "activo"
+        ],
+        [
+            3,
+            "Sat\u00e9lite-3-1756384547907453600",
+            "Observaci\u00f3n",
+            "[{\"nombre\": \"C\\u00e1mara\", \"tipo\": \"\\u00d3ptico\"}]",
+            "2024-01-15",
+            "LEO",
+            "activo"
+        ],
+        [
+            4,
+            "bautaisgtas",
+            "terrestre",
+            "2",
+            "2021-21-21",
+            "leo",
+            "activo"
+        ],
+        [
+            5,
+            "asdasfa",
+            "2",
+            "2",
+            "2",
+            "2",
+            "2"
+        ]
+    ],
+    "misiones": [
+        [
+            1,
+            "Sat\u00e9lite-1-1756384547704889500",
+            "Misi\u00f3n de Sat\u00e9lite-1-1756384547704889500",
+            "Andes",
+            30,
+            "planificada"
+        ],
+        [
+            2,
+            "Sat\u00e9lite-2-1756384547806705900",
+            "Misi\u00f3n de Sat\u00e9lite-2-1756384547806705900",
+            "Andes",
+            30,
+            "planificada"
+        ],
+        [
+            3,
+            "Sat\u00e9lite-3-1756384547907453600",
+            "Misi\u00f3n de Sat\u00e9lite-3-1756384547907453600",
+            "Andes",
+            30,
+            "planificada"
+        ]
+    ],
+    "datos": [
+        [
+            1,
+            "Sat\u00e9lite-1-1756384547704889500",
+            "imagen",
+            "base64_imagen_simulada",
+            "2024-01-15"
+        ],
+        [
+            2,
+            "Sat\u00e9lite-2-1756384547806705900",
+            "imagen",
+            "base64_imagen_simulada",
+            "2024-01-15"
+        ],
+        [
+            3,
+            "Sat\u00e9lite-3-1756384547907453600",
+            "imagen",
+            "base64_imagen_simulada",
+            "2024-01-15"
+        ]
+    ]
+}

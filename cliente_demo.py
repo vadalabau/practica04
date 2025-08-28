@@ -18,28 +18,73 @@ def cliente_worker(cliente_id):
             s.connect(('localhost', 12345))
             print(f"Cliente {cliente_id} conectado")
             
-            # Registrar satélite
-            solicitud = {
-                "action": "register_satellite",
-                "data": {
-                    "nombre": f"Satélite-{cliente_id}",
-                    "tipo": "Observación",
-                    "fecha_lanzamiento": "2024-01-15",
-                    "orbita": "LEO",
-                    "sensores": [{"nombre": "Cámara", "tipo": "Óptico"}]
-                }
+            satelite_nombre = f"Satélite-{cliente_id}-{time.time_ns()}"
+
+            # 1. Registrar satélite
+            solicitud_satelite = {
+                "accion": "registrar_satelite", # Usar "registrar_satelite" para compatibilidad con server.py
+                "nombre": satelite_nombre,
+                "tipo": "Observación",
+                "fecha_lanzamiento": "2024-01-15",
+                "orbita": "LEO",
+                "estado": "activo",
+                "sensores": json.dumps([{"nombre": "Cámara", "tipo": "Óptico"}]) # Los sensores deben ser un string JSON
             }
             
-            s.send(json.dumps(solicitud).encode('utf-8'))
-            respuesta = json.loads(s.recv(4096).decode('utf-8'))
-            print(f"✅ Cliente {cliente_id}: Satélite registrado")
+            s.send(json.dumps(solicitud_satelite).encode('utf-8'))
+            respuesta_satelite = json.loads(s.recv(4096).decode('utf-8'))
+            print(f"✅ Cliente {cliente_id}: Registro Satélite: {respuesta_satelite}")
+
+            # 2. Consultar satélites
+            solicitud_consulta_satelites = {"accion": "consultar_satelites"}
+            s.send(json.dumps(solicitud_consulta_satelites).encode('utf-8'))
+            respuesta_consulta_satelites = json.loads(s.recv(4096).decode('utf-8'))
             
-            # Consultar satélites
-            solicitud = {"action": "query_satellites"}
-            s.send(json.dumps(solicitud).encode('utf-8'))
-            respuesta = json.loads(s.recv(4096).decode('utf-8'))
-            satelites = respuesta.get('data', {}).get('satelites', [])
-            print(f"✅ Cliente {cliente_id}: Encontrados {len(satelites)} satélites")
+            satelites_encontrados = respuesta_consulta_satelites.get('data', {}).get('satelites', [])
+            print(f"✅ Cliente {cliente_id}: Encontrados {len(satelites_encontrados)} satélites después de registro")
+            
+            # 3. Registrar misión (usando el satélite recién registrado)
+            if respuesta_satelite.get("status") == "success":
+                solicitud_mision = {
+                    "accion": "registrar_mision",
+                    "satelite_nombre": satelite_nombre,
+                    "objetivo": f"Misión de {satelite_nombre}",
+                    "zona": "Andes",
+                    "duracion": 30,
+                    "estado": "planificada"
+                }
+                s.send(json.dumps(solicitud_mision).encode('utf-8'))
+                respuesta_mision = json.loads(s.recv(4096).decode('utf-8'))
+                print(f"✅ Cliente {cliente_id}: Registro Misión: {respuesta_mision}")
+
+            # 4. Consultar misiones
+            solicitud_consulta_misiones = {"accion": "consultar_misiones"}
+            s.send(json.dumps(solicitud_consulta_misiones).encode('utf-8'))
+            respuesta_consulta_misiones = json.loads(s.recv(4096).decode('utf-8'))
+            
+            misiones_encontradas = respuesta_consulta_misiones.get('data', {}).get('misiones', [])
+            print(f"✅ Cliente {cliente_id}: Encontradas {len(misiones_encontradas)} misiones")
+
+            # 5. Registrar dato
+            if respuesta_satelite.get("status") == "success":
+                solicitud_dato = {
+                    "accion": "registrar_dato",
+                    "satelite_nombre": satelite_nombre,
+                    "tipo": "imagen",
+                    "valor": "base64_imagen_simulada",
+                    "fecha": "2024-01-15"
+                }
+                s.send(json.dumps(solicitud_dato).encode('utf-8'))
+                respuesta_dato = json.loads(s.recv(4096).decode('utf-8'))
+                print(f"✅ Cliente {cliente_id}: Registro Dato: {respuesta_dato}")
+
+            # 6. Consultar datos
+            solicitud_consulta_datos = {"accion": "consultar_datos"}
+            s.send(json.dumps(solicitud_consulta_datos).encode('utf-8'))
+            respuesta_consulta_datos = json.loads(s.recv(4096).decode('utf-8'))
+            
+            datos_encontrados = respuesta_consulta_datos.get('data', {}).get('datos', [])
+            print(f"✅ Cliente {cliente_id}: Encontrados {len(datos_encontrados)} datos")
             
             print(f"🔌 Cliente {cliente_id} desconectado")
             

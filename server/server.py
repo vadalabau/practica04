@@ -5,6 +5,7 @@ import json
 import sqlite3
 
 DB_FILE = "sistema_satelites.db"
+DATABASE_LOCK = threading.Lock()
 
 # Inicializar la base de datos y crear tablas si no existen
 def init_db():
@@ -67,64 +68,71 @@ def handle_client(client_socket):
             response = {"status": "error", "message": "Acción no reconocida"}
 
             if accion == "registrar_satelite":
-                try:
-                    cursor.execute(
-                        "INSERT INTO satelites (nombre,tipo,sensores,fecha_lanzamiento,orbita,estado) VALUES (?,?,?,?,?,?)",
-                        (data["nombre"], data["tipo"], data["sensores"], data["fecha_lanzamiento"], data["orbita"], data["estado"])
-                    )
-                    conn.commit()
-                    response = {"status": "success", "message": "Satélite registrado"}
-                except sqlite3.IntegrityError:
-                    response = {"status": "error", "message": "El satélite ya existe"}
+                with DATABASE_LOCK:
+                    try:
+                        cursor.execute(
+                            "INSERT INTO satelites (nombre,tipo,sensores,fecha_lanzamiento,orbita,estado) VALUES (?,?,?,?,?,?)",
+                            (data["nombre"], data["tipo"], data["sensores"], data["fecha_lanzamiento"], data["orbita"], data["estado"])
+                        )
+                        conn.commit()
+                        response = {"status": "success", "message": "Satélite registrado"}
+                    except sqlite3.IntegrityError:
+                        response = {"status": "error", "message": "El satélite ya existe"}
 
             elif accion == "consultar_satelites":
-                cursor.execute("SELECT * FROM satelites")
-                satelites = cursor.fetchall()
-                response = {"status": "success", "data": satelites}
+                with DATABASE_LOCK:
+                    cursor.execute("SELECT * FROM satelites")
+                    satelites = cursor.fetchall()
+                    response = {"status": "success", "data": {"satelites": satelites}}
 
             elif accion == "registrar_mision":
-                cursor.execute("SELECT * FROM satelites WHERE nombre=?", (data["satelite_nombre"],))
-                if cursor.fetchone():
-                    cursor.execute(
-                        "INSERT INTO misiones (satelite_nombre,objetivo,zona,duracion,estado) VALUES (?,?,?,?,?)",
-                        (data["satelite_nombre"], data["objetivo"], data["zona"], data["duracion"], data["estado"])
-                    )
-                    conn.commit()
-                    response = {"status": "success", "message": "Misión registrada"}
-                else:
-                    response = {"status": "error", "message": "Satélite no encontrado"}
+                with DATABASE_LOCK:
+                    cursor.execute("SELECT * FROM satelites WHERE nombre=?", (data["satelite_nombre"],))
+                    if cursor.fetchone():
+                        cursor.execute(
+                            "INSERT INTO misiones (satelite_nombre,objetivo,zona,duracion,estado) VALUES (?,?,?,?,?)",
+                            (data["satelite_nombre"], data["objetivo"], data["zona"], data["duracion"], data["estado"])
+                        )
+                        conn.commit()
+                        response = {"status": "success", "message": "Misión registrada"}
+                    else:
+                        response = {"status": "error", "message": "Satélite no encontrado"}
 
             elif accion == "consultar_misiones":
-                cursor.execute("SELECT * FROM misiones")
-                misiones = cursor.fetchall()
-                response = {"status": "success", "data": misiones}
+                with DATABASE_LOCK:
+                    cursor.execute("SELECT * FROM misiones")
+                    misiones = cursor.fetchall()
+                    response = {"status": "success", "data": {"misiones": misiones}}
 
             elif accion == "registrar_dato":
-                cursor.execute("SELECT * FROM satelites WHERE nombre=?", (data["satelite_nombre"],))
-                if cursor.fetchone():
-                    cursor.execute(
-                        "INSERT INTO datos (satelite_nombre,tipo,valor,fecha) VALUES (?,?,?,?)",
-                        (data["satelite_nombre"], data["tipo"], data["valor"], data["fecha"])
-                    )
-                    conn.commit()
-                    response = {"status": "success", "message": "Dato registrado"}
-                else:
-                    response = {"status": "error", "message": "Satélite no encontrado"}
+                with DATABASE_LOCK:
+                    cursor.execute("SELECT * FROM satelites WHERE nombre=?", (data["satelite_nombre"],))
+                    if cursor.fetchone():
+                        cursor.execute(
+                            "INSERT INTO datos (satelite_nombre,tipo,valor,fecha) VALUES (?,?,?,?)",
+                            (data["satelite_nombre"], data["tipo"], data["valor"], data["fecha"])
+                        )
+                        conn.commit()
+                        response = {"status": "success", "message": "Dato registrado"}
+                    else:
+                        response = {"status": "error", "message": "Satélite no encontrado"}
 
             elif accion == "consultar_datos":
-                cursor.execute("SELECT * FROM datos")
-                datos = cursor.fetchall()
-                response = {"status": "success", "data": datos}
+                with DATABASE_LOCK:
+                    cursor.execute("SELECT * FROM datos")
+                    datos = cursor.fetchall()
+                    response = {"status": "success", "data": {"datos": datos}}
 
             # Guardar backup
-            cursor.execute("SELECT * FROM satelites")
-            satelites = cursor.fetchall()
-            cursor.execute("SELECT * FROM misiones")
-            misiones = cursor.fetchall()
-            cursor.execute("SELECT * FROM datos")
-            datos = cursor.fetchall()
-            with open("backup.json", "w") as f:
-                json.dump({"satelites": satelites, "misiones": misiones, "datos": datos}, f, indent=4)
+            with DATABASE_LOCK:
+                cursor.execute("SELECT * FROM satelites")
+                satelites = cursor.fetchall()
+                cursor.execute("SELECT * FROM misiones")
+                misiones = cursor.fetchall()
+                cursor.execute("SELECT * FROM datos")
+                datos = cursor.fetchall()
+                with open("backup.json", "w") as f:
+                    json.dump({"satelites": satelites, "misiones": misiones, "datos": datos}, f, indent=4)
 
             client_socket.send(json.dumps(response).encode())
 

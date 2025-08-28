@@ -8,6 +8,60 @@
             "2021-12",
             "las",
             "activo"
+        ],
+        [
+            2,
+            "bauti",
+            "optica",
+            "camara",
+            "2006-10-01",
+            "leo",
+            "activo"
+        ],
+        [
+            3,
+            "Sat\u00e9lite-1",
+            "Observaci\u00f3n",
+            "C\u00e1mara \u00d3ptica",
+            "2024-01-15",
+            "LEO",
+            "Activo"
+        ],
+        [
+            4,
+            "Sat\u00e9lite-2",
+            "Observaci\u00f3n",
+            "C\u00e1mara \u00d3ptica",
+            "2024-01-15",
+            "LEO",
+            "Activo"
+        ],
+        [
+            5,
+            "Sat\u00e9lite-3",
+            "Observaci\u00f3n",
+            "C\u00e1mara \u00d3ptica",
+            "2024-01-15",
+            "LEO",
+            "Activo"
+        ],
+        [
+            6,
+            "pene",
+            "terrestre",
+            "ninguno",
+            "2021-12-12",
+            "leo",
+            "en mantenimiento"
+        ],
+        [
+            7,
+            "asd",
+            "espacial",
+            "2",
+            "2021-12-12",
+            "leo",
+            "activo"
         ]
     ],
     "misiones": [
@@ -17,6 +71,14 @@
             "terasaf",
             "oasr",
             2,
+            "activo"
+        ],
+        [
+            2,
+            "bauti",
+            "optica",
+            "leo",
+            4,
             "activo"
         ]
     ],
