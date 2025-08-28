@@ -1,17 +1,14 @@
+# client.py
 import socket
 import json
 
-HOST = "localhost"
-PORT = 12345
-
-def enviar_solicitud(accion, info=None):
-    cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    cliente.connect((HOST, PORT))
-    request = {"accion": accion, "info": info or {}}
-    cliente.send(json.dumps(request).encode())
-    respuesta = cliente.recv(8192).decode()
-    cliente.close()
-    return json.loads(respuesta)
+def enviar_request(request):
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(("localhost", 12345))
+    client.send(json.dumps(request).encode())
+    respuesta = client.recv(4096)
+    client.close()
+    return json.loads(respuesta.decode())
 
 def menu():
     while True:
@@ -20,53 +17,79 @@ def menu():
         print("2. Consultar satélites")
         print("3. Registrar misión")
         print("4. Consultar misiones")
-        print("5. Registrar dato de sensor")
-        print("6. Consultar datos de sensores")
+        print("5. Registrar dato")
+        print("6. Consultar datos")
         print("7. Salir")
         opcion = input("Elige una opción: ")
 
         if opcion == "1":
-            info = {
-                "nombre": input("Nombre: "),
-                "tipo": input("Tipo: "),
-                "sensores": input("Sensores (separados por coma): "),
-                "fecha_lanzamiento": input("Fecha de lanzamiento (YYYY-MM-DD): "),
-                "orbita": input("Órbita: "),
-                "estado": input("Estado (activo/inactivo/en mantenimiento): ")
+            nombre = input("Nombre: ")
+            tipo = input("Tipo: ")
+            sensores = input("Sensores: ")
+            fecha_lanzamiento = input("Fecha de lanzamiento: ")
+            orbita = input("Órbita: ")
+            estado = input("Estado: ")
+            request = {
+                "accion": "registrar_satelite",
+                "nombre": nombre,
+                "tipo": tipo,
+                "sensores": sensores,
+                "fecha_lanzamiento": fecha_lanzamiento,
+                "orbita": orbita,
+                "estado": estado
             }
-            print(enviar_solicitud("registrar_satelite", info))
+            print(enviar_request(request))
+
         elif opcion == "2":
-            respuesta = enviar_solicitud("consultar_satelites")
-            for s in respuesta.get("data", []):
-                print(f"{s['id']}: {s['nombre']} ({s['tipo']}) - {s['estado']}")
+            request = {"accion": "consultar_satelites"}
+            respuesta = enviar_request(request)
+            print(respuesta)
+
         elif opcion == "3":
-            info = {
-                "satelite_id": int(input("ID del satélite: ")),
-                "objetivo": input("Objetivo de la misión: "),
-                "zona": input("Zona de observación: "),
-                "duracion": input("Duración: "),
-                "estado": input("Estado: ")
+            satelite_nombre = input("Nombre del satélite: ")
+            objetivo = input("Objetivo: ")
+            zona = input("Zona: ")
+            duracion = int(input("Duración (días): "))
+            estado = input("Estado: ")
+            request = {
+                "accion": "registrar_mision",
+                "satelite_nombre": satelite_nombre,
+                "objetivo": objetivo,
+                "zona": zona,
+                "duracion": duracion,
+                "estado": estado
             }
-            print(enviar_solicitud("registrar_mision", info))
+            print(enviar_request(request))
+
         elif opcion == "4":
-            respuesta = enviar_solicitud("consultar_misiones")
-            for m in respuesta.get("data", []):
-                print(f"{m['id']}: Satélite {m['satelite_id']} - {m['objetivo']} - {m['estado']}")
+            request = {"accion": "consultar_misiones"}
+            respuesta = enviar_request(request)
+            print(respuesta)
+
         elif opcion == "5":
-            info = {
-                "satelite_id": int(input("ID del satélite: ")),
-                "tipo_dato": input("Tipo de dato: "),
-                "valor": input("Valor: ")
+            satelite_nombre = input("Nombre del satélite: ")
+            tipo = input("Tipo de dato: ")
+            valor = input("Valor: ")
+            fecha = input("Fecha: ")
+            request = {
+                "accion": "registrar_dato",
+                "satelite_nombre": satelite_nombre,
+                "tipo": tipo,
+                "valor": valor,
+                "fecha": fecha
             }
-            print(enviar_solicitud("registrar_dato", info))
+            print(enviar_request(request))
+
         elif opcion == "6":
-            respuesta = enviar_solicitud("consultar_datos")
-            for d in respuesta.get("data", []):
-                print(f"{d['id']}: Satélite {d['satelite_id']} - {d['tipo_dato']} = {d['valor']}")
+            request = {"accion": "consultar_datos"}
+            respuesta = enviar_request(request)
+            print(respuesta)
+
         elif opcion == "7":
+            print("Saliendo...")
             break
         else:
-            print("Opción inválida.")
+            print("Opción inválida")
 
 if __name__ == "__main__":
     menu()

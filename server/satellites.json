@@ -1,24 +1,37 @@
 [
     {
         "id": 1,
-        "nombre": "JOTAQ",
-        "tipo": "terrestre",
+        "nombre": "pa\u00f1ordo",
+        "tipo": "terrestrte",
         "sensores": [
-            "master"
+            "jett",
+            " clovve"
         ],
         "fecha_lanzamiento": "2021-12-12",
-        "orbita": "LEO",
+        "orbita": "elo",
         "estado": "activo"
     },
     {
-        "nombre": "asd",
-        "tipo": "TERRESTRE",
+        "id": 2,
+        "nombre": "JETT",
+        "tipo": "terrestre",
         "sensores": [
-            "marrie"
+            "1",
+            "2"
         ],
         "fecha_lanzamiento": "2021-12-12",
-        "orbita": "leo",
-        "estado": "activo",
-        "id": 2
+        "orbita": "los",
+        "estado": "activo"
+    },
+    {
+        "id": 3,
+        "nombre": "la campora",
+        "tipo": "terrestre",
+        "sensores": [
+            "2"
+        ],
+        "fecha_lanzamiento": "2021-12-12",
+        "orbita": "LAS",
+        "estado": "activo"
     }
 ]

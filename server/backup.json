@@ -1,0 +1,24 @@
+{
+    "satelites": [
+        [
+            1,
+            "AURA",
+            "terrestre",
+            "2",
+            "2021-12",
+            "las",
+            "activo"
+        ]
+    ],
+    "misiones": [
+        [
+            1,
+            "AURA",
+            "terasaf",
+            "oasr",
+            2,
+            "activo"
+        ]
+    ],
+    "datos": []
+}

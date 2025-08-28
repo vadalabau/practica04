@@ -1,105 +1,150 @@
+# server.py
 import socket
 import threading
 import json
+import sqlite3
 
-# Archivos JSON para persistencia
-SATELITES_FILE = "satelites.json"
-MISIONES_FILE = "misiones.json"
-DATOS_FILE = "datos.json"
+DB_FILE = "sistema_satelites.db"
 
-# Cargar datos
-def cargar_datos(ruta):
-    try:
-        with open(ruta, "r") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return []
+# Inicializar la base de datos y crear tablas si no existen
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
 
-def guardar_datos(ruta, data):
-    with open(ruta, "w") as f:
-        json.dump(data, f, indent=4)
+    # Tabla satelites
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS satelites (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT UNIQUE,
+            tipo TEXT,
+            sensores TEXT,
+            fecha_lanzamiento TEXT,
+            orbita TEXT,
+            estado TEXT
+        )
+    ''')
 
-# Funciones para manejar operaciones
-def registrar_satelite(info):
-    satelites = cargar_datos(SATELITES_FILE)
-    nuevo_id = max([s["id"] for s in satelites], default=0) + 1
-    info["id"] = nuevo_id
-    info["sensores"] = [s.strip() for s in info.get("sensores", "").split(",")]
-    satelites.append(info)
-    guardar_datos(SATELITES_FILE, satelites)
-    return {"status": "success", "message": "Satélite registrado"}
+    # Tabla misiones
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS misiones (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            satelite_nombre TEXT,
+            objetivo TEXT,
+            zona TEXT,
+            duracion INTEGER,
+            estado TEXT,
+            FOREIGN KEY (satelite_nombre) REFERENCES satelites(nombre)
+        )
+    ''')
 
-def consultar_satelites():
-    satelites = cargar_datos(SATELITES_FILE)
-    return {"status": "success", "data": satelites}
+    # Tabla datos
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS datos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            satelite_nombre TEXT,
+            tipo TEXT,
+            valor TEXT,
+            fecha TEXT,
+            FOREIGN KEY (satelite_nombre) REFERENCES satelites(nombre)
+        )
+    ''')
 
-def registrar_mision(info):
-    misiones = cargar_datos(MISIONES_FILE)
-    nuevo_id = max([m["id"] for m in misiones], default=0) + 1
-    info["id"] = nuevo_id
-    misiones.append(info)
-    guardar_datos(MISIONES_FILE, misiones)
-    return {"status": "success", "message": "Misión registrada"}
+    conn.commit()
+    conn.close()
 
-def consultar_misiones():
-    misiones = cargar_datos(MISIONES_FILE)
-    return {"status": "success", "data": misiones}
+def handle_client(client_socket):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
 
-def registrar_dato(info):
-    datos = cargar_datos(DATOS_FILE)
-    nuevo_id = max([d["id"] for d in datos], default=0) + 1
-    info["id"] = nuevo_id
-    datos.append(info)
-    guardar_datos(DATOS_FILE, datos)
-    return {"status": "success", "message": "Dato registrado"}
-
-def consultar_datos():
-    datos = cargar_datos(DATOS_FILE)
-    return {"status": "success", "data": datos}
-
-# Manejo de clientes
-def manejar_cliente(conn, addr):
-    print(f"Cliente conectado: {addr}")
-    try:
-        while True:
-            data = conn.recv(4096).decode()
-            if not data:
+    while True:
+        try:
+            request = client_socket.recv(4096)
+            if not request:
                 break
-            try:
-                request = json.loads(data)
-                accion = request.get("accion")
-                info = request.get("info", {})
-                if accion == "registrar_satelite":
-                    respuesta = registrar_satelite(info)
-                elif accion == "consultar_satelites":
-                    respuesta = consultar_satelites()
-                elif accion == "registrar_mision":
-                    respuesta = registrar_mision(info)
-                elif accion == "consultar_misiones":
-                    respuesta = consultar_misiones()
-                elif accion == "registrar_dato":
-                    respuesta = registrar_dato(info)
-                elif accion == "consultar_datos":
-                    respuesta = consultar_datos()
+
+            data = json.loads(request.decode())
+            accion = data.get("accion")
+            response = {"status": "error", "message": "Acción no reconocida"}
+
+            if accion == "registrar_satelite":
+                try:
+                    cursor.execute(
+                        "INSERT INTO satelites (nombre,tipo,sensores,fecha_lanzamiento,orbita,estado) VALUES (?,?,?,?,?,?)",
+                        (data["nombre"], data["tipo"], data["sensores"], data["fecha_lanzamiento"], data["orbita"], data["estado"])
+                    )
+                    conn.commit()
+                    response = {"status": "success", "message": "Satélite registrado"}
+                except sqlite3.IntegrityError:
+                    response = {"status": "error", "message": "El satélite ya existe"}
+
+            elif accion == "consultar_satelites":
+                cursor.execute("SELECT * FROM satelites")
+                satelites = cursor.fetchall()
+                response = {"status": "success", "data": satelites}
+
+            elif accion == "registrar_mision":
+                cursor.execute("SELECT * FROM satelites WHERE nombre=?", (data["satelite_nombre"],))
+                if cursor.fetchone():
+                    cursor.execute(
+                        "INSERT INTO misiones (satelite_nombre,objetivo,zona,duracion,estado) VALUES (?,?,?,?,?)",
+                        (data["satelite_nombre"], data["objetivo"], data["zona"], data["duracion"], data["estado"])
+                    )
+                    conn.commit()
+                    response = {"status": "success", "message": "Misión registrada"}
                 else:
-                    respuesta = {"status": "error", "message": "Acción desconocida"}
-            except Exception as e:
-                respuesta = {"status": "error", "message": str(e)}
-            conn.send(json.dumps(respuesta).encode())
-    except Exception as e:
-        print(f"Error con el cliente {addr}: {e}")
-    finally:
-        conn.close()
-        print(f"Cliente desconectado: {addr}")
+                    response = {"status": "error", "message": "Satélite no encontrado"}
 
-# Configuración del servidor
-HOST = "localhost"
-PORT = 12345
-servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-servidor.bind((HOST, PORT))
-servidor.listen()
-print(f"Servidor escuchando en {HOST}:{PORT}")
+            elif accion == "consultar_misiones":
+                cursor.execute("SELECT * FROM misiones")
+                misiones = cursor.fetchall()
+                response = {"status": "success", "data": misiones}
 
-while True:
-    conn, addr = servidor.accept()
-    threading.Thread(target=manejar_cliente, args=(conn, addr), daemon=True).start()
+            elif accion == "registrar_dato":
+                cursor.execute("SELECT * FROM satelites WHERE nombre=?", (data["satelite_nombre"],))
+                if cursor.fetchone():
+                    cursor.execute(
+                        "INSERT INTO datos (satelite_nombre,tipo,valor,fecha) VALUES (?,?,?,?)",
+                        (data["satelite_nombre"], data["tipo"], data["valor"], data["fecha"])
+                    )
+                    conn.commit()
+                    response = {"status": "success", "message": "Dato registrado"}
+                else:
+                    response = {"status": "error", "message": "Satélite no encontrado"}
+
+            elif accion == "consultar_datos":
+                cursor.execute("SELECT * FROM datos")
+                datos = cursor.fetchall()
+                response = {"status": "success", "data": datos}
+
+            # Guardar backup
+            cursor.execute("SELECT * FROM satelites")
+            satelites = cursor.fetchall()
+            cursor.execute("SELECT * FROM misiones")
+            misiones = cursor.fetchall()
+            cursor.execute("SELECT * FROM datos")
+            datos = cursor.fetchall()
+            with open("backup.json", "w") as f:
+                json.dump({"satelites": satelites, "misiones": misiones, "datos": datos}, f, indent=4)
+
+            client_socket.send(json.dumps(response).encode())
+
+        except Exception as e:
+            client_socket.send(json.dumps({"status": "error", "message": str(e)}).encode())
+
+    conn.close()
+    client_socket.close()
+
+def main():
+    init_db()
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(("0.0.0.0", 12345))
+    server.listen(5)
+    print("Servidor escuchando en el puerto 12345...")
+
+    while True:
+        client_socket, addr = server.accept()
+        print(f"Conexión de {addr}")
+        threading.Thread(target=handle_client, args=(client_socket,), daemon=True).start()
+
+if __name__ == "__main__":
+    main()

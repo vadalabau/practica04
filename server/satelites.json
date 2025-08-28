@@ -1,13 +1,11 @@
 [
     {
-        "nombre": "LIFE",
+        "id": 1,
+        "nombre": "coso",
         "tipo": "terrestre",
-        "sensores": [
-            "muchisimos"
-        ],
-        "fecha_lanzamiento": "2021-12-12",
-        "orbita": "LEO",
-        "estado": "activo",
-        "id": 1
+        "sensores": "naz",
+        "fecha_lanzamiento": "2120-12-21",
+        "orbita": "las",
+        "estado": "activo"
     }
 ]
